@@ -1,7 +1,36 @@
 from argparse import ArgumentError
+from os import isatty
 from typing import Any, Callable, List, Mapping, Text, Tuple, Union
 from string import ascii_lowercase
-from getch import getch
+
+# Required to read unbuffered chars.
+def _find_getch():
+    try:
+        import termios
+    except ImportError:
+        # Non-POSIX. Return msvcrt's (Windows') getch.
+        import msvcrt
+        return msvcrt.getch
+
+    # POSIX system. Create and return a getch that manipulates the tty.
+    import sys, tty
+    def _getch():
+        # Can't set non-tty stream to raw
+        if not sys.stdin.isatty():
+            return sys.stdin.read(1)
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+    return _getch
+
+getch = _find_getch()
+
 
 class Stack(list):
     def push(self, a):
@@ -92,9 +121,8 @@ def _pick(stack: Stack) -> None:
     stack.push(stack[-index])
 
 def _input(stack: Stack) -> None:
-    ch = getch()
     try:
-        a =  ord(ch)
+        a = ord(chr(ord(getch())))
     except:
         a = -1
     stack.push(a)
@@ -157,7 +185,7 @@ def _parse(code: Text) -> Tuple[List, Text]:
 
         if letter.isdigit():
             number = number * 10 + int(letter)
-            if len(code) == 0 or not code[0].isdigit():
+            if len(code) == 0 or (not code[0].isdigit() and code[0] != '_'):
                 instructions.append(number)
                 number = 0
         elif letter == '_':
@@ -288,7 +316,7 @@ def main():
         raise RuntimeError('Either code or file must be supplied exclusively!')
 
     if path and not code:
-        with open(path) as file:
+        with open(path, 'r', encoding='utf-8') as file:
             code = file.read()
 
     instructions = parse(code)
