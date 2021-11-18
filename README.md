@@ -22,7 +22,7 @@ optional arguments:
 
 #### Examples
 
-```
+```bash
 python3 false.py -p examples/fac.f
 
 python3 false.py examples/fac.f
@@ -31,4 +31,7 @@ echo 3 | python false.py -p examples/fac.f
 
 python3 false.py -c '"Hello, World!
 "'
+
+# dumb way to copy a file:
+cat examples/fac.f | python false.py examples/copy.f > examples/fac2.f
 ```
