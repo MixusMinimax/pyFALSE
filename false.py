@@ -1,20 +1,7 @@
+from argparse import ArgumentError
 from typing import Any, Callable, List, Mapping, Text, Tuple, Union
 from string import ascii_lowercase
 from getch import getch
-
-
-code = R'''
-{ factorial program in false! }
-
-[$1=~[$1-f;!*]?]f:          { fac() in false }
-
-"calculate the factorial of [1..8]: "
-ß^ß'0-$$0>~\8>|$
-"result: "
-~[\f;!.\]?
-["illegal input!"]?"
-"
-'''
 
 class Stack(list):
     def push(self, a):
@@ -273,25 +260,42 @@ class Emulator:
         return stack
 
 
+def is_valid_file(parser, arg):
+    import os
+    if not os.path.exists(arg):
+        parser.error(f'The file {arg} does not exist!')
+    else:
+        return arg  # return path
+
 def main():
 
-    code = R'''
-{ factorial program in false! }
 
-[$1=~[$1-f;!*]?]f:          { fac() in false }
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description='Interpret FALSE code')
+    parser.add_argument('input', action='store', nargs='?',
+                        help='file that contains code', metavar='FILE',
+                        type=lambda x: is_valid_file(parser, x))
+    parser.add_argument('-c', '--code', action='store',
+                        help='raw code string', metavar='TEXT')
+    parser.add_argument('-p', '--print-stack', action='store_true',
+                        help='Print stack after execution')
+    args = parser.parse_args()
 
-"calculate the factorial of [1..8]: "
-ß^ß'0-$$0>~\8>|$
-"result: "
-~[\f;!.]?
-["illegal input!"]?"
-"
-    '''
+    path = args.input
+    code = args.code
+
+    if (not path) == (not code):
+        raise RuntimeError('Either code or file must be supplied exclusively!')
+
+    if path and not code:
+        with open(path) as file:
+            code = file.read()
 
     instructions = parse(code)
     emulator = Emulator()
     stack = emulator.run(instructions)
-    print(stack)
+    if args.print_stack:
+        print(f'Stack: {stack}')
 
 if __name__ == '__main__':
     main()
