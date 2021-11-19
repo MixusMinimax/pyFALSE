@@ -118,7 +118,7 @@ def _pick(stack: Stack) -> None:
     index = stack.pop()
     if not index < len(stack):
         raise RuntimeError('Tried picking from too small stack!')
-    stack.push(stack[-index])
+    stack.push(stack[-index - 1])
 
 def _input(stack: Stack) -> None:
     try:
@@ -185,12 +185,12 @@ def _parse(code: Text) -> Tuple[List, Text]:
 
         if letter.isdigit():
             number = number * 10 + int(letter)
-            if len(code) == 0 or (not code[0].isdigit() and code[0] != '_'):
+            if len(code) == 0 or not code[0].isdigit():
+                if (len(code) > 0 and code[0] == '_'):
+                    number = -number
+                    code = code[1:]
                 instructions.append(number)
                 number = 0
-        elif letter == '_':
-            instructions.append(-number)
-            number = 0
         elif letter == "'":
             if len(code) == 0:
                 raise RuntimeError('"\'" must precede a character!')
