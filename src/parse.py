@@ -8,16 +8,14 @@ def parse(code: Text) -> List:
     instructions, remainder = _parse(code)
     return instructions
 
+
 def _parse(code: Text) -> Tuple[List, Text]:
-
+    # Recursively parse code and lambdas
     instructions = []
-
     number = 0
-
     while len(code) > 0:
         letter = code[0]
         code = code[1:]
-
         if letter.isdigit():
             number = number * 10 + int(letter)
             if len(code) == 0 or not code[0].isdigit():
@@ -43,7 +41,7 @@ def _parse(code: Text) -> Tuple[List, Text]:
         elif letter == '"':
             index = code.index('"')
             instructions.append(PrintOp(code[:index]))
-            code = code[index + 1:] 
+            code = code[index + 1:]
         else:
             MAP = {
                 '$': DUP,
@@ -73,5 +71,4 @@ def _parse(code: Text) -> Tuple[List, Text]:
             }
             if letter in MAP:
                 instructions.append(MAP[letter])
-
     return instructions, code
